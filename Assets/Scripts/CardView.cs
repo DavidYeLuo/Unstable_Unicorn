@@ -6,9 +6,10 @@ using System;
 namespace UnstableUnicorn
 {
     [Serializable]
-    public class CardTemplate : MonoBehaviour
+    public class CardView : MonoBehaviour
     {
         public TMP_Text text;
-        public Image image;
+        public RawImage image;
+        public GameObject backSide;
     }
 }
