@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using System;
 namespace UnstableUnicorn
 {
-    public class PlayerFieldDisplay : MonoBehaviour
+    public class PlayerFieldView : MonoBehaviour
     {
         [Header("Prefabs")]
         [SerializeField] private CardView cardPrefab;
@@ -54,7 +54,9 @@ namespace UnstableUnicorn
         {
             for (int i = 0; i < handSize; i++)
             {
-                handView[i].text.text = context.titleMap[cards[i].id];
+                handView[i].title.text = context.titleMap[cards[i].id];
+                handView[i].description.text = context.idStringDescriptionMap[cards[i].id];
+                handView[i].type.text = context.idStringCardTypeMap[cards[i].id];
                 handView[i].image.texture = context.idImageMap[cards[i].id];
                 handView[i].backSide.SetActive(false);
                 handView[i].gameObject.SetActive(true);
@@ -82,7 +84,9 @@ namespace UnstableUnicorn
         {
             for (int i = 0; i < handSize; i++)
             {
-                unicornView[i].text.text = context.titleMap[cards[i].id];
+                unicornView[i].title.text = context.titleMap[cards[i].id];
+                unicornView[i].description.text = context.idStringDescriptionMap[cards[i].id];
+                unicornView[i].type.text = context.idStringCardTypeMap[cards[i].id];
                 unicornView[i].image.texture = context.idImageMap[cards[i].id];
                 unicornView[i].gameObject.SetActive(true);
             }
@@ -95,7 +99,9 @@ namespace UnstableUnicorn
         {
             for (int i = 0; i < handSize; i++)
             {
-                spellView[i].text.text = context.titleMap[cards[i].id];
+                spellView[i].title.text = context.titleMap[cards[i].id];
+                spellView[i].description.text = context.idStringDescriptionMap[cards[i].id];
+                spellView[i].type.text = context.idStringCardTypeMap[cards[i].id];
                 spellView[i].image.texture = context.idImageMap[cards[i].id];
                 spellView[i].gameObject.SetActive(true);
             }

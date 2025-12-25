@@ -555,7 +555,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 889ba3572cec2e3fbab0a03f703ab2cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  text: {fileID: 2751372962648975835}
+  title: {fileID: 2751372962648975835}
+  description: {fileID: 1137474928879382156}
+  type: {fileID: 7086645660404429569}
   image: {fileID: 6276001049602133579}
   backSide: {fileID: 8924497195388989087}
 --- !u!1 &6327902602507308550

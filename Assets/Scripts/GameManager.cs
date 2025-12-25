@@ -27,6 +27,14 @@ namespace UnstableUnicorn
         public string title;
         public string type;
         public string image;
+        public Description description;
+    }
+    // JSON Format
+    [Serializable]
+    public struct Description
+    {
+        public string en;
+        public string de;
     }
     // JSON Format
     [Serializable]
@@ -87,21 +95,21 @@ namespace UnstableUnicorn
         public readonly string[] idStringCardTypeMap; // Map<id,string>
         public readonly string[] titleMap; // Map<id,string>
         public readonly string[] stringImageMap; // Map<id,CardImage>
+        public readonly string[] idStringDescriptionMap; // Map<id,string>
         public readonly Texture2D[] idImageMap; // Map<id,Texture2D>
-        public readonly Texture2D backSideCardTexture;
         public CardContext(CardType[] idCardTypeMap,
                 string[] idStringCardTypeMap,
                 Texture2D[] idImageMap,
-                Texture2D backSideTexture,
                 string[] titleMap,
+                string[] idStringDescription,
                 string[] cardImageMap)
         {
             this.idCardTypeMap = idCardTypeMap;
             this.idStringCardTypeMap = idStringCardTypeMap;
             this.titleMap = titleMap;
+            this.idStringDescriptionMap = idStringDescription;
             this.stringImageMap = cardImageMap;
             this.idImageMap = idImageMap;
-            this.backSideCardTexture = backSideTexture;
         }
     }
 
@@ -112,11 +120,11 @@ namespace UnstableUnicorn
         [SerializeField] private int _startingHandSize = 5;
         [SerializeField] private int _maxHandCards = 32;
         [SerializeField] private int _maxStableSize = 32;
+        [SerializeField] private float secondsBeforeStateChange = 5.0f;
         [Space]
         [Header("View")]
-        [SerializeField] private PlayerFieldDisplay mainPlayerHand;
-        [SerializeField] private PlayerFieldDisplay[] otherPlayers;
-        private const string _backSideCardString = "UU-Back-Main";
+        [SerializeField] private PlayerFieldView mainPlayerHand;
+        [SerializeField] private PlayerFieldView[] otherPlayers;
         private Deck _deck;
 
         private PlayerField[] playersHands; // Server side (Knows everyone's cards)
@@ -140,6 +148,9 @@ namespace UnstableUnicorn
             {"magic",CardType.Magic},
         };
 
+        private StateMachine _stateMachine;
+        private float timeSinceStateChange = 0.0f;
+
         /// Loads JSON file and images containing card info thanks to the author from 
         /// https://github.com/geniegeist/unstable-unicorns
         /// They're loaded into CardContext
@@ -157,6 +168,7 @@ namespace UnstableUnicorn
             Card[] deckAsArray = new Card[deckSize];
             string[] _titleMap = new string[uniqueCardSize];
             string[] _cardImageMap = new string[uniqueCardSize];
+            string[] _idStringDescription = new string[uniqueCardSize];
             Texture2D[] _idImageMap = new Texture2D[uniqueCardSize];
             Texture2D[] _images = Resources.LoadAll<Texture2D>("Textures");
             CardType[] _idCardTypeMap = new CardType[uniqueCardSize];
@@ -171,6 +183,7 @@ namespace UnstableUnicorn
                 CardInfo cardInfo = deckInfo.cards[i];
                 Card card = new Card(i);
                 _titleMap[i] = cardInfo.title;
+                _idStringDescription[i] = cardInfo.description.en; // Sorry only english atm
                 _cardImageMap[i] = cardInfo.image;
                 _idImageMap[i] = _stringImageMap[cardInfo.image]; // NOTE: image must exist
                 _idStringCardTypeMap[i] = cardInfo.type;
@@ -180,9 +193,26 @@ namespace UnstableUnicorn
                     deckAsArray[deckIndex] = card;
                 }
             }
-            Texture2D _backSideCardTexture = _stringImageMap[_backSideCardString];
-            cardContext = new CardContext(_idCardTypeMap, _idStringCardTypeMap, _idImageMap, _backSideCardTexture, _titleMap, _cardImageMap);
+            cardContext = new CardContext(_idCardTypeMap, _idStringCardTypeMap, _idImageMap, _titleMap, _idStringDescription, _cardImageMap);
             _deck = new Deck(deckAsArray);
+
+        }
+        private void Awake()
+        {
+            int[] playerChoices = new int[_numPlayers];
+            for (int i = 0; i < _numPlayers; i++)
+            {
+                playerChoices[i] = i;
+            }
+            _stateMachine = new StateMachine(playerChoices);
+        }
+        private void OnEnable()
+        {
+            _stateMachine.stateChange += OnStateChange;
+        }
+        private void OnDisable()
+        {
+            _stateMachine.stateChange -= OnStateChange;
         }
         private void Start()
         {
@@ -212,6 +242,35 @@ namespace UnstableUnicorn
                 if (i >= _numPlayers) break;
                 otherPlayers[i].SetCardContext(cardContext); // Init
                 otherPlayers[i].UpdateWithHiddenCards(_startingHandSize);
+            }
+        }
+        public void Update()
+        {
+            // Currently, it just cycles through states and then players
+            if (timeSinceStateChange > secondsBeforeStateChange)
+            {
+                timeSinceStateChange = 0.0f;
+                _stateMachine.Next();
+            }
+            timeSinceStateChange += Time.deltaTime;
+        }
+        private void OnStateChange(int player, GameState state)
+        {
+            switch (state)
+            {
+                case GameState.BeginingPhase:
+                    // Prompt player for optional effects
+                    break;
+                case GameState.DrawPhase:
+                    // player receives card
+                    break;
+                case GameState.ActionPhase:
+                    // Prompt player choices
+                    break;
+                case GameState.EndPhase:
+                    // Check if player has more than 7 cards
+                    // (if card > 7) Prompt cards to discard
+                    break;
             }
         }
     }
