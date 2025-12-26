@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using Core;
 namespace UnstableUnicorn
 {
     public class PlayerFieldView : MonoBehaviour
@@ -18,6 +19,7 @@ namespace UnstableUnicorn
         private CardView[] unicornView;
 
         private CardContext context; // Maps id to useful information
+        /// 
         private void Awake()
         {
             handView = new CardView[capacity];

@@ -1,0 +1,16 @@
+{
+    "name": "Utility_ASM",
+    "rootNamespace": "",
+    "references": [
+        "GUID:53bf75f15f2772b7b9143bfe9a1c93a4"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
