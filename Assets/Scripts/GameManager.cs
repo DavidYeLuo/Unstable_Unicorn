@@ -106,6 +106,7 @@ namespace UnstableUnicorn
             {
                 cards[i] = cards[i + 1];
             }
+            size--;
             return ret;
         }
         public void Add(Card card)
@@ -244,11 +245,6 @@ namespace UnstableUnicorn
                 _playersFields[playerIndex].hand.cards = new Card[_maxHandCards];
                 _playersFields[playerIndex].stable.cards = new Card[_maxStableSize];
                 _playersFields[playerIndex].spellField.cards = new Card[_maxStableSize];
-                for (int i = 0; i < _startingHandSize; i++)
-                {
-                    _playersFields[playerIndex].hand.cards[i] = _deck.Draw();
-                }
-                _playersFields[playerIndex].hand.size = _startingHandSize;
             }
             _boardGame = new BoardGame()
             {
@@ -280,6 +276,13 @@ namespace UnstableUnicorn
         private void Start()
         {
             _deck.Shuffle();
+            for (int playerIndex = 0; playerIndex < _numPlayers; playerIndex++)
+            {
+                for (int i = 0; i < _startingHandSize; i++)
+                {
+                    _playersFields[playerIndex].hand.Add(_deck.Draw());
+                }
+            }
 
             // View
             mainPlayerHand.SetCardContext(cardContext); // Init
