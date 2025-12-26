@@ -18,7 +18,7 @@ namespace UnstableUnicorn
         private CardView[] unicornView;
 
         private CardContext context; // Maps id to useful information
-        private void Start()
+        private void Awake()
         {
             handView = new CardView[capacity];
             for (int i = 0; i < capacity; i++)

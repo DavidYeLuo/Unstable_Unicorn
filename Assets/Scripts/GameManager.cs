@@ -56,10 +56,12 @@ namespace UnstableUnicorn
     {
         private Card[] deck;
         int size;
+        public readonly int capacity;
         public Deck(Card[] deck)
         {
             this.deck = deck;
             size = deck.Length;
+            capacity = deck.Length;
         }
         public void Shuffle()
         {
@@ -71,6 +73,11 @@ namespace UnstableUnicorn
                 deck[rng] = temp;
             }
         }
+        public void Add(Card card)
+        {
+            deck[size] = card;
+            size++;
+        }
         public Card Draw()
         {
             Card ret = deck[size - 1];
@@ -79,14 +86,48 @@ namespace UnstableUnicorn
         }
     }
 
+    public struct Pile
+    {
+        public Card[] cards;
+        public int size;
+        public int Find(Card card)
+        {
+            for (int i = 0; i < size; i++)
+            {
+                if (cards[i].id == card.id) return i;
+            }
+            return -1;
+        }
+        public Card Take(int index)
+        {
+            Card ret = cards[index];
+            // shift cards since the index no longer valid
+            for (int i = index; i < size - 1; i++)
+            {
+                cards[i] = cards[i + 1];
+            }
+            return ret;
+        }
+        public void Add(Card card)
+        {
+            cards[size] = card;
+            size++;
+        }
+    }
+
     public struct PlayerField
     {
-        public int handSize;
-        public int unicornStableSize;
-        public int spellStableSize;
-        public Card[] handCards;
-        public Card[] unicornStableCards;
-        public Card[] spellStableCards;
+        public Pile hand;
+        public Pile stable;
+        public Pile spellField;
+    }
+
+    public struct BoardGame
+    {
+        public PlayerField[] playerFields;
+        public Deck deck;
+        public Pile discardPile;
+        public Pile nursery;
     }
 
     public struct CardContext
@@ -127,7 +168,8 @@ namespace UnstableUnicorn
         [SerializeField] private PlayerFieldView[] otherPlayers;
         private Deck _deck;
 
-        private PlayerField[] playersHands; // Server side (Knows everyone's cards)
+        private PlayerField[] _playersFields; // Server side (Knows everyone's cards)
+        private BoardGame _boardGame;
 
         // Contains all the card mappings
         public CardContext cardContext { get; private set; }
@@ -196,6 +238,26 @@ namespace UnstableUnicorn
             cardContext = new CardContext(_idCardTypeMap, _idStringCardTypeMap, _idImageMap, _titleMap, _idStringDescription, _cardImageMap);
             _deck = new Deck(deckAsArray);
 
+            _playersFields = new PlayerField[_numPlayers];
+            for (int playerIndex = 0; playerIndex < _numPlayers; playerIndex++)
+            {
+                _playersFields[playerIndex].hand.cards = new Card[_maxHandCards];
+                _playersFields[playerIndex].stable.cards = new Card[_maxStableSize];
+                _playersFields[playerIndex].spellField.cards = new Card[_maxStableSize];
+                for (int i = 0; i < _startingHandSize; i++)
+                {
+                    _playersFields[playerIndex].hand.cards[i] = _deck.Draw();
+                }
+                _playersFields[playerIndex].hand.size = _startingHandSize;
+            }
+            _boardGame = new BoardGame()
+            {
+                playerFields = _playersFields,
+                deck = _deck,
+                discardPile = new Pile() { cards = new Card[_deck.capacity] },
+                nursery = new Pile() { cards = new Card[_deck.capacity] }
+            };
+
         }
         private void Awake()
         {
@@ -205,6 +267,7 @@ namespace UnstableUnicorn
                 playerChoices[i] = i;
             }
             _stateMachine = new StateMachine(playerChoices);
+            Init();
         }
         private void OnEnable()
         {
@@ -216,25 +279,11 @@ namespace UnstableUnicorn
         }
         private void Start()
         {
-            Init();
             _deck.Shuffle();
-
-            playersHands = new PlayerField[_numPlayers];
-            for (int playerIndex = 0; playerIndex < _numPlayers; playerIndex++)
-            {
-                playersHands[playerIndex].handCards = new Card[_maxHandCards];
-                playersHands[playerIndex].spellStableCards = new Card[_maxStableSize];
-                playersHands[playerIndex].unicornStableCards = new Card[_maxStableSize];
-                for (int i = 0; i < _startingHandSize; i++)
-                {
-                    playersHands[playerIndex].handCards[i] = _deck.Draw();
-                }
-                playersHands[playerIndex].handSize += _startingHandSize;
-            }
 
             // View
             mainPlayerHand.SetCardContext(cardContext); // Init
-            mainPlayerHand.UpdateHandView(playersHands[0].handCards, playersHands[0].handSize);
+            mainPlayerHand.UpdateHandView(_playersFields[0].hand.cards, _playersFields[0].hand.size);
             // I don't think the game can display more than 4 players at once
             // maybe we can have a way to switch views
             for (int i = 0; i < 3; i++)
